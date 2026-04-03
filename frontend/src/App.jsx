@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react'
 
 const API_URL = '/api'
+const TEST_PATH = '/test-concurrent'
 
 function App() {
-  const [activeTab, setActiveTab] = useState('users')
+  const [activeTab, setActiveTab] = useState(() =>
+    window.location.pathname === TEST_PATH ? 'test' : 'users'
+  )
   const [users, setUsers] = useState([])
   const [orders, setOrders] = useState([])
   const [error, setError] = useState(null)
@@ -32,6 +35,13 @@ function App() {
     fetchUsers()
     fetchOrders()
   }, [])
+
+  useEffect(() => {
+    const nextPath = activeTab === 'test' ? TEST_PATH : '/'
+    if (window.location.pathname !== nextPath) {
+      window.history.replaceState({}, '', nextPath)
+    }
+  }, [activeTab])
 
   const showError = (msg) => {
     setError(msg)

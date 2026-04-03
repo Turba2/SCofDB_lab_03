@@ -38,15 +38,23 @@ SELECT
 FROM generate_series(1, 100000) gs
 CROSS JOIN user_pool;
 
--- 1..4 позиции на заказ (в среднем ~4)
-INSERT INTO order_items (order_id, product_name, price, quantity)
+-- 1..4 позиции на заказ
+INSERT INTO order_items (order_id, product_name, price, quantity, subtotal)
 SELECT
-    o.id,
-    'Product ' || (1 + floor(random() * 2000)::int) AS product_name,
-    round((5 + random() * 995)::numeric, 2) AS price,
-    (1 + floor(random() * 4)::int) AS quantity
-FROM orders o
-CROSS JOIN LATERAL generate_series(1, 1 + floor(random() * 4)::int) s;
+    item_rows.order_id,
+    item_rows.product_name,
+    item_rows.price,
+    item_rows.quantity,
+    round((item_rows.price * item_rows.quantity)::numeric, 2) AS subtotal
+FROM (
+    SELECT
+        o.id AS order_id,
+        'Product ' || (1 + floor(random() * 2000)::int) AS product_name,
+        round((5 + random() * 995)::numeric, 2) AS price,
+        (1 + floor(random() * 4)::int) AS quantity
+    FROM orders o
+    CROSS JOIN LATERAL generate_series(1, 1 + floor(random() * 4)::int) s
+) AS item_rows;
 
 -- Пересчёт total_amount
 UPDATE orders o
